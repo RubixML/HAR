@@ -1,0 +1,5 @@
+/vendor
+composer.lock
+har.model
+progress.csv
+report.json
