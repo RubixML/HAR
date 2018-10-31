@@ -1,6 +1,6 @@
 # Mobile Phone Human Activity Recognizer
 
-An example Rubix ML project that recognizes one of six human activities given mobile phone sensor data using a Multilayer Neural Network.
+An example Rubix ML project that recognizes one of six human activities given mobile phone sensor data using a Softmax Classifier.
 
 ## Installation
 

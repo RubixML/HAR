@@ -10,13 +10,15 @@
     "authors": [
         {
             "name": "Andrew DalPino",
-            "email": "me@andrewdalpino.com"
+            "email": "me@andrewdalpino.com",
+            "homepage": "https://andrewdalpino.com",
+            "role": "Engineer"
         }
     ],
     "require": {
         "php": ">=7.1.3",
         "league/csv": "^9.1",
-        "rubix/ml": "dev-master"
+        "rubix/ml": "0.0.6-alpha"
     },
     "config": {
         "preferred-install": "dist",
