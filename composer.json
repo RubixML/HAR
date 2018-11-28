@@ -1,24 +1,25 @@
 {
-    "name": "rubixml/har",
+    "name": "rubix/har",
     "type": "project",
-    "description": "An example Rubix ML project that recognizes one of six human activities given mobile phone sensor data using a Multilayer Neural Network.",
+    "description": "An example Rubix ML project that recognizes one of six human activities given mobile phone sensor data using a Softmax Classifier.",
     "homepage": "https://github.com/RubixML/HAR",
     "license": "MIT",
     "keywords": [
-        "machine", "learning", "data", "science", "mining", "predictive", "modeling", "ai", "classification", "neural", "net"
+        "machine", "learning", "data", "science", "mining", "predictive", "modeling", "ai",
+        "classification", "softmax", "mobile"
     ],
     "authors": [
         {
             "name": "Andrew DalPino",
             "email": "me@andrewdalpino.com",
             "homepage": "https://andrewdalpino.com",
-            "role": "Engineer"
+            "role": "Lead Engineer"
         }
     ],
     "require": {
         "php": ">=7.1.3",
         "league/csv": "^9.1",
-        "rubix/ml": "0.0.6-alpha"
+        "rubix/ml": "0.0.7-alpha"
     },
     "config": {
         "preferred-install": "dist",
