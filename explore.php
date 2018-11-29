@@ -2,51 +2,46 @@
 
 include __DIR__ . '/vendor/autoload.php';
 
+use Rubix\ML\Pipeline;
 use Rubix\ML\Manifold\TSNE;
 use Rubix\ML\Datasets\Labeled;
+use Rubix\ML\Other\Loggers\Screen;
 use Rubix\ML\Kernels\Distance\Euclidean;
 use Rubix\ML\Transformers\NumericStringConverter;
+use Rubix\ML\Transformers\PrincipalComponentAnalysis;
 use League\Csv\Reader;
 use League\Csv\Writer;
 
-const OUTPUT_FILE = 'tsne.csv';
+const OUTPUT_FILE = 'embedding.csv';
 
-echo '╔═══════════════════════════════════════════════════════════════╗' . "\n";
-echo '║                                                               ║' . "\n";
-echo '║ HAR Dataset Visualizer using t-SNE                            ║' . "\n";
-echo '║                                                               ║' . "\n";
-echo '╚═══════════════════════════════════════════════════════════════╝' . "\n";
-echo "\n";
+echo '╔═══════════════════════════════════════════════════════════════╗' . PHP_EOL;
+echo '║                                                               ║' . PHP_EOL;
+echo '║ HAR Dataset Embedder using PCA and t-SNE                      ║' . PHP_EOL;
+echo '║                                                               ║' . PHP_EOL;
+echo '╚═══════════════════════════════════════════════════════════════╝' . PHP_EOL;
+echo PHP_EOL;
 
-$xTrainReader = Reader::createFromPath(__DIR__ . '/train/X_train.csv')
-    ->setDelimiter(',')->setEnclosure('"');
+$samples = Reader::createFromPath(__DIR__ . '/train/X_train.csv')
+    ->setDelimiter(',')->setEnclosure('"')->getRecords();
 
-$yTrainReader = Reader::createFromPath(__DIR__ . '/train/y_train.csv')
-    ->setDelimiter(',')->setEnclosure('"');
+$labels = Reader::createFromPath(__DIR__ . '/train/y_train.csv')
+    ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
 
-$dataset = Labeled::fromIterator($xTrainReader->getRecords(),
-    $yTrainReader->fetchColumn(0));
+$dataset = Labeled::fromIterator($samples, $labels)->randomize()->head(500);
 
-$dataset = $dataset->randomize()->head(300);
+$estimator = new Pipeline([
+    new NumericStringConverter(),
+    new PrincipalComponentAnalysis(100),
+], new TSNE(2, 30, 12., 100., 500, 1e-8, 5, new Euclidean()));
 
-$converter = new NumericStringConverter();
+$estimator->setLogger(new Screen('HAR'));
 
-$dataset->apply($converter);
+$estimator->train(clone $dataset); // Clone since same dataset is used later to predict
 
-$embedder = new TSNE(2, 30, 12., 1000, 0.5, 0.4, 1e-6, new Euclidean());
-
-echo 'Embedding started ...';
-
-$start = microtime(true);
-
-$samples = $embedder->embed($dataset);
-
-echo ' done  in ' . (string) (microtime(true) - $start) . ' seconds.' . "\n";
-
-$dataset = Labeled::quick($samples, $dataset->labels());
+$predictions = $estimator->predict($dataset);
 
 $writer = Writer::createFromPath(OUTPUT_FILE, 'w+');
-$writer->insertOne(['x', 'y', 'label']);
-$writer->insertAll($dataset->zip());
+$writer->insertOne(['x', 'y']);
+$writer->insertAll($predictions);
 
-echo 'Embedding saved to ' . OUTPUT_FILE . '.' . "\n";
+echo 'Embedding saved to ' . OUTPUT_FILE . PHP_EOL;
