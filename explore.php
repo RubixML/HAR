@@ -6,9 +6,8 @@ use Rubix\ML\Pipeline;
 use Rubix\ML\Manifold\TSNE;
 use Rubix\ML\Datasets\Labeled;
 use Rubix\ML\Other\Loggers\Screen;
-use Rubix\ML\Kernels\Distance\Euclidean;
+use Rubix\ML\Kernels\Distance\Minkowski;
 use Rubix\ML\Transformers\NumericStringConverter;
-use Rubix\ML\Transformers\PrincipalComponentAnalysis;
 use League\Csv\Reader;
 use League\Csv\Writer;
 
@@ -16,7 +15,7 @@ const OUTPUT_FILE = 'embedding.csv';
 
 echo '╔═══════════════════════════════════════════════════════════════╗' . PHP_EOL;
 echo '║                                                               ║' . PHP_EOL;
-echo '║ HAR Dataset Embedder using PCA and t-SNE                      ║' . PHP_EOL;
+echo '║ HAR Dataset Embedder using t-SNE                              ║' . PHP_EOL;
 echo '║                                                               ║' . PHP_EOL;
 echo '╚═══════════════════════════════════════════════════════════════╝' . PHP_EOL;
 echo PHP_EOL;
@@ -31,8 +30,7 @@ $dataset = Labeled::fromIterator($samples, $labels)->randomize()->head(500);
 
 $estimator = new Pipeline([
     new NumericStringConverter(),
-    new PrincipalComponentAnalysis(100),
-], new TSNE(2, 30, 12., 100., 500, 1e-8, 5, new Euclidean()));
+], new TSNE(2, 30, 12., 100., 500, 1e-8, 3, new Minkowski(3.0)));
 
 $estimator->setLogger(new Screen('HAR'));
 
