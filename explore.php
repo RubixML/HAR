@@ -20,17 +20,19 @@ echo '║                                                               ║' . P
 echo '╚═══════════════════════════════════════════════════════════════╝' . PHP_EOL;
 echo PHP_EOL;
 
+echo 'Loading data into memory ...' . PHP_EOL;
+
 $samples = Reader::createFromPath(__DIR__ . '/train/X_train.csv')
     ->setDelimiter(',')->setEnclosure('"')->getRecords();
 
 $labels = Reader::createFromPath(__DIR__ . '/train/y_train.csv')
     ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
 
-$dataset = Labeled::fromIterator($samples, $labels)->randomize()->head(500);
+$dataset = Labeled::fromIterator($samples, $labels)->randomize()->head(1000);
 
 $estimator = new Pipeline([
     new NumericStringConverter(),
-], new TSNE(2, 30, 12., 100., 500, 1e-8, 3, new Minkowski(3.0)));
+], new TSNE(2, 30, 12., 100., new Minkowski(3.0)));
 
 $estimator->setLogger(new Screen('HAR'));
 
