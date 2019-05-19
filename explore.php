@@ -2,11 +2,10 @@
 
 include __DIR__ . '/vendor/autoload.php';
 
-use Rubix\ML\Pipeline;
 use Rubix\ML\Embedders\TSNE;
 use Rubix\ML\Datasets\Labeled;
 use Rubix\ML\Other\Loggers\Screen;
-use Rubix\ML\Kernels\Distance\Minkowski;
+use Rubix\ML\Transformers\SparseRandomProjector;
 use Rubix\ML\Transformers\NumericStringConverter;
 use League\Csv\Reader;
 use League\Csv\Writer;
@@ -30,18 +29,17 @@ $labels = Reader::createFromPath(__DIR__ . '/train/y_train.csv')
 
 $dataset = Labeled::fromIterator($samples, $labels)->randomize()->head(1000);
 
-$estimator = new Pipeline([
-    new NumericStringConverter(),
-], new TSNE(2, 30, 12., 100., new Minkowski(3.0)));
+$dataset->apply(new NumericStringConverter());
+$dataset->apply(new SparseRandomProjector(120));
 
-$estimator->setLogger(new Screen('HAR'));
+$embedder = new TSNE(2, 30, 12., 100);
 
-$estimator->train(clone $dataset); // Clone since same dataset is used later to predict
+$embedder->setLogger(new Screen('HAR'));
 
-$predictions = $estimator->predict($dataset);
+$embedding = $embedder->embed($dataset);
 
 $writer = Writer::createFromPath(OUTPUT_FILE, 'w+');
-$writer->insertOne(['x', 'y']);
-$writer->insertAll($predictions);
+$writer->insertOne(['x', 'y', 'label']);
+$writer->insertAll(iterator_to_array($embedding->zip()));
 
 echo 'Embedding saved to ' . OUTPUT_FILE . PHP_EOL;

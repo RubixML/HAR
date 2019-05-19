@@ -1,15 +1,19 @@
 # Human Activity Recognizer
 
-This is an example project that demonstrates the problem of human activity recognition (HAR) given mobile phone sensor data (Gyroscope, Accelerometer, etc.). The training data are the human annotated sensor readings of 30 volunteers while performing various tasks such as *sitting*, *standing*, and *laying* down. Each sample is 561 dimensional, however we demonstrate that with a technique called *random projection* we can reduce the dimensionality down to 100 without any loss in accuracy. The estimator employed to make the predictions is a [Softmax Classifier](https://github.com/RubixML/RubixML#softmax-classifier) which is a multiclass generalization of the Logistic Regression classifier used in the [Credit Card Default Predictor](https://github.com/RubixML/Credit) example project.
+This is an example project that demonstrates the problem of human activity recognition (HAR) given mobile phone sensor data (Gyroscope, Accelerometer, etc.). The training data are the human annotated sensor readings of 30 volunteers while performing various tasks such as *sitting*, *standing*, and *laying* down. Each sample is 561 dimensional, however we demonstrate that with a technique called *random projection* we can reduce the dimensionality down to 120 without any loss in accuracy. The estimator employed to make the predictions is a [Softmax Classifier](https://github.com/RubixML/RubixML#softmax-classifier) which is a multiclass generalization of the Logistic Regression classifier used in the [Credit Card Default Predictor](https://github.com/RubixML/Credit) example project.
+
+- **Difficulty**: Medium
+- **Training time**: < 5 Minutes
+- **Memory needed**: < 1G
 
 ## Installation
 
-Clone the repository locally:
+Clone the repository locally using [Git](https://git-scm.com/):
 ```sh
 $ git clone https://github.com/RubixML/HAR
 ```
 
-Install dependencies:
+Install dependencies using [Composer](https://getcomposer.org/):
 ```sh
 $ composer install
 ```

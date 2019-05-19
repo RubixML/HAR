@@ -8,7 +8,7 @@ use Rubix\ML\Other\Loggers\Screen;
 use Rubix\ML\NeuralNet\Optimizers\Adam;
 use Rubix\ML\Classifiers\SoftmaxClassifier;
 use Rubix\ML\Transformers\ZScaleStandardizer;
-use Rubix\ML\Transformers\DenseRandomProjector;
+use Rubix\ML\Transformers\SparseRandomProjector;
 use Rubix\ML\Transformers\NumericStringConverter;
 use Rubix\ML\CrossValidation\Reports\AggregateReport;
 use Rubix\ML\CrossValidation\Reports\ConfusionMatrix;
@@ -46,9 +46,9 @@ $testing = Labeled::fromIterator($xTest, $yTest);
 
 $estimator = new Pipeline([
     new NumericStringConverter(),
-    new DenseRandomProjector(100),
+    new SparseRandomProjector(120),
     new ZScaleStandardizer(),
-], new SoftmaxClassifier(100, new Adam(0.002), 1e-4));
+], new SoftmaxClassifier(100, new Adam(0.002)));
 
 $estimator->setLogger(new Screen('HAR'));
 
