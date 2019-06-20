@@ -20,6 +20,8 @@ const MODEL_FILE = 'har.model';
 const PROGRESS_FILE = 'progress.csv';
 const REPORT_FILE = 'report.json';
 
+ini_set('memory_limit', '-1');
+
 echo '╔═══════════════════════════════════════════════════════════════╗' . PHP_EOL;
 echo '║                                                               ║' . PHP_EOL;
 echo '║ Human Activity Recognizer using Softmax Classifier            ║' . PHP_EOL;
