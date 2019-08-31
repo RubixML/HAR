@@ -16,51 +16,50 @@ use Rubix\ML\CrossValidation\Reports\MulticlassBreakdown;
 use League\Csv\Reader;
 use League\Csv\Writer;
 
-const MODEL_FILE = 'har.model';
-const PROGRESS_FILE = 'progress.csv';
-const REPORT_FILE = 'report.json';
-
 ini_set('memory_limit', '-1');
 
 echo '╔═══════════════════════════════════════════════════════════════╗' . PHP_EOL;
 echo '║                                                               ║' . PHP_EOL;
-echo '║ Human Activity Recognizer using Softmax Classifier            ║' . PHP_EOL;
+echo '║ Human Activity Recognizer using a Softmax Classifier          ║' . PHP_EOL;
 echo '║                                                               ║' . PHP_EOL;
 echo '╚═══════════════════════════════════════════════════════════════╝' . PHP_EOL;
 echo PHP_EOL;
 
 echo 'Loading data into memory ...' . PHP_EOL;
 
-$xTrain = Reader::createFromPath(__DIR__ . '/train/X_train.csv')
+$trainSamples = Reader::createFromPath(__DIR__ . '/train/X_train.csv')
     ->setDelimiter(',')->setEnclosure('"')->getRecords();
 
-$yTrain = Reader::createFromPath(__DIR__ . '/train/y_train.csv')
+$trainLabels = Reader::createFromPath(__DIR__ . '/train/y_train.csv')
     ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
 
-$xTest = Reader::createFromPath(__DIR__ . '/test/X_test.csv')
+$testSamples = Reader::createFromPath(__DIR__ . '/test/X_test.csv')
     ->setDelimiter(',')->setEnclosure('"')->getRecords();
 
-$yTest = Reader::createFromPath(__DIR__ . '/test/y_test.csv')
+$testLabels = Reader::createFromPath(__DIR__ . '/test/y_test.csv')
     ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
 
-$training = Labeled::fromIterator($xTrain, $yTrain);
-$testing = Labeled::fromIterator($xTest, $yTest);
+$training = Labeled::fromIterator($trainSamples, $trainLabels);
+
+$testing = Labeled::fromIterator($testSamples, $testLabels);
 
 $estimator = new Pipeline([
     new NumericStringConverter(),
     new SparseRandomProjector(120),
     new ZScaleStandardizer(),
-], new SoftmaxClassifier(100, new Adam(0.002)));
+], new SoftmaxClassifier(100, new Adam(0.001)));
 
 $estimator->setLogger(new Screen('HAR'));
 
 $estimator->train($training);
 
-$writer = Writer::createFromPath(PROGRESS_FILE, 'w+');
-$writer->insertOne(['loss']);
-$writer->insertAll(array_map(null, $estimator->steps(), []));
+$losses = $estimator->steps();
 
-echo 'Progress saved to ' . PROGRESS_FILE . PHP_EOL;
+$writer = Writer::createFromPath('progress.csv', 'w+');
+$writer->insertOne(['loss']);
+$writer->insertAll(array_map(null, $losses, []));
+
+echo 'Progress saved to progress.csv' . PHP_EOL;
 
 $predictions = $estimator->predict($testing);
 
@@ -71,6 +70,6 @@ $report = new AggregateReport([
 
 $results = $report->generate($predictions, $testing->labels());
 
-file_put_contents(REPORT_FILE, json_encode($results, JSON_PRETTY_PRINT));
+file_put_contents('report.json', json_encode($results, JSON_PRETTY_PRINT));
 
-echo 'Report saved to ' . REPORT_FILE . PHP_EOL;
+echo 'Report saved to report.json' . PHP_EOL;
