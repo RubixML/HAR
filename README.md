@@ -32,10 +32,10 @@ The data are given to us in multiple CSV files within the `train` and `test` fol
 ```php
 use League\Csv\Reader;
 
-$samples = Reader::createFromPath(__DIR__ . '/train/samples.csv')
+$samples = Reader::createFromPath('train/samples.csv')
     ->setDelimiter(',')->setEnclosure('"')->getRecords();
 
-$labels = Reader::createFromPath(__DIR__ . '/train/labels.csv')
+$labels = Reader::createFromPath('train/labels.csv')
     ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
 ```
 
@@ -121,8 +121,104 @@ $estimator->save();
 ```
 
 ### Cross Validation
+The authors of the dataset provide an additional 2,947 labeled testing samples that we'll use to cross validate the model. We've held out using these samples for training because we'd like to be able to test the model on samples it has never seen before. We'll start by extracting the testing samples and labels from their source files.
 
-Coming soon ...
+> **Note:** The source code for this example can be found in the [validate.php](https://github.com/RubixML/HAR/blob/master/validate.php) file in project root.
+
+```php
+use League\Csv\Reader;
+
+$samples = Reader::createFromPath('test/samples.csv')
+    ->setDelimiter(',')->setEnclosure('"')->getRecords();
+
+$labels = Reader::createFromPath('test/labels.csv')
+    ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
+```
+
+Then, we'll instantiate a new Labeled dataset containing the testing data.
+
+```php
+use Rubix\ML\Datasets\Labeled;
+
+$dataset = Labeled::fromIterator($samples, $labels);
+```
+
+### Load Model from Storage
+To load the trained Softmax Classifier pipeline, call the static `load()` method on the [Persistent Model](https://docs.rubixml.com/en/latest/persistent-model.html) class with a Persister instance pointing to the model in storage.
+
+```php
+use Rubix\ML\PersistentModel;
+use Rubix\ML\Persisters\Filesystem;
+
+$estimator = PersistentModel::load(new Filesystem('har.model'));
+```
+
+### Making Predictions
+To obtain the predictions from the model, simply pass the testing set to the `predict()` method on the estimator instance.
+
+```php
+$predictions = $estimator->predict($dataset);
+```
+
+### Generating the Report
+A cross validation report gives detailed statistics about the performance of the model given the ground truth labels. A [Multiclass Breakdown](https://docs.rubixml.com/en/latest/cross-validation/reports/multiclass-breakdown.html) report breaks down the perforance of the model at the class level and outputs statistics such as accuracy, precision, recall, and more. A [Confusion Matrix](https://docs.rubixml.com/en/latest/cross-validation/reports/confusion-matrix.html) is a table that compares the predicted labels to their actual labels. We'll wrap both reports in an [Aggregate Report](https://docs.rubixml.com/en/latest/cross-validation/reports/aggregate-report.html) that combines the output of both reports into one.
+
+```php
+use Rubix\ML\CrossValidation\Reports\AggregateReport;
+use Rubix\ML\CrossValidation\Reports\MulticlassBreakdown;
+use Rubix\ML\CrossValidation\Reports\ConfusionMatrix;
+
+$report = new AggregateReport([
+    new MulticlassBreakdown(),
+    new ConfusionMatrix(),
+]);
+```
+
+Then, generate the report using the predictions and labels from the testing set.
+
+```php
+$results = $report->generate($predictions, $dataset->labels());
+```
+
+The output of the report should start with something like the output below. As you can see, our estimator is about 97% accurate and has very good specificity and negative predictive value.
+
+```json
+[
+    {
+        "overall": {
+            "accuracy": 0.9674308943546821,
+            "precision": 0.9063809316861989,
+            "recall": 0.9048187793615003,
+            "specificity": 0.9802554195397294,
+            "negative_predictive_value": 0.9803712249716344,
+            "false_discovery_rate": 0.09361906831380108,
+            "miss_rate": 0.09518122063849947,
+            "fall_out": 0.019744580460270538,
+            "false_omission_rate": 0.01962877502836563,
+            "f1_score": 0.905257137386163,
+            "mcc": 0.8858111380161123,
+            "informedness": 0.8850741989012301,
+            "markedness": 0.8867521566578332,
+            "true_positives": 2675,
+            "true_negatives": 13375,
+            "false_positives": 272,
+            "false_negatives": 272,
+            "cardinality": 2947
+        },
+    }
+
+]
+```
+
+### Wrapup
+- Dimensionality reduction is often used to reduce the size of the input feature space to speed up learning.
+- Random Projection is a type of unsupervised dimensionality reduction based on the [Johnson–Lindenstrauss lemma](https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma).
+- The [Softmax Classifier](https://docs.rubixml.com/en/latest/classifiers/softmax-classifier.html) is a type of single layer neural network with a Softmax output layer.
+- A momentum force can be applied to the parameter updates of the network to speed up training.
+- Cross Validation is the process of testing the trained estimator on data it has never seen before.
+
+### Next Steps
+Now that you've completed this tutorial on classifying human activity, see if you can acheive better accuracy by fine-tuning the hyperparameters. See how much the random projection effects the accuracy of the estimator by removing Gaussian Random Projector from the pipeline. 
 
 ## Original Dataset
 Contact: Jorge L. Reyes-Ortiz(1,2), Davide Anguita(1), Alessandro Ghio(1), Luca Oneto(1) and Xavier Parra(2) Institutions: 1 - Smartlab - Non-Linear Complex Systems Laboratory DITEN - University  degli Studi di Genova, Genoa (I-16145), Italy. 2 - CETpD - Technical Research Centre for Dependency Care and Autonomous Living Polytechnic University of Catalonia (BarcelonaTech). Vilanova i la Geltrú (08800), Spain activityrecognition '@' smartlab.ws
