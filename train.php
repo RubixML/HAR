@@ -3,55 +3,42 @@
 include __DIR__ . '/vendor/autoload.php';
 
 use Rubix\ML\Pipeline;
+use Rubix\ML\PersistentModel;
 use Rubix\ML\Datasets\Labeled;
-use Rubix\ML\Other\Loggers\Screen;
-use Rubix\ML\NeuralNet\Optimizers\Adam;
-use Rubix\ML\Classifiers\SoftmaxClassifier;
 use Rubix\ML\Transformers\NumericStringConverter;
 use Rubix\ML\Transformers\GaussianRandomProjector;
 use Rubix\ML\Transformers\ZScaleStandardizer;
-use Rubix\ML\CrossValidation\Reports\AggregateReport;
-use Rubix\ML\CrossValidation\Reports\ConfusionMatrix;
-use Rubix\ML\CrossValidation\Reports\MulticlassBreakdown;
+use Rubix\ML\Classifiers\SoftmaxClassifier;
+use Rubix\ML\NeuralNet\Optimizers\Momentum;
+use Rubix\ML\Persisters\Filesystem;
+use Rubix\ML\Other\Loggers\Screen;
 use League\Csv\Reader;
 use League\Csv\Writer;
 
 ini_set('memory_limit', '-1');
 
-echo '╔═══════════════════════════════════════════════════════════════╗' . PHP_EOL;
-echo '║                                                               ║' . PHP_EOL;
-echo '║ Human Activity Recognizer using a Softmax Classifier          ║' . PHP_EOL;
-echo '║                                                               ║' . PHP_EOL;
-echo '╚═══════════════════════════════════════════════════════════════╝' . PHP_EOL;
-echo PHP_EOL;
-
 echo 'Loading data into memory ...' . PHP_EOL;
 
-$trainSamples = Reader::createFromPath(__DIR__ . '/train/X_train.csv')
+$samples = Reader::createFromPath('train/samples.csv')
     ->setDelimiter(',')->setEnclosure('"')->getRecords();
 
-$trainLabels = Reader::createFromPath(__DIR__ . '/train/y_train.csv')
+$labels = Reader::createFromPath('train/labels.csv')
     ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
 
-$testSamples = Reader::createFromPath(__DIR__ . '/test/X_test.csv')
-    ->setDelimiter(',')->setEnclosure('"')->getRecords();
+$dataset = Labeled::fromIterator($samples, $labels);
 
-$testLabels = Reader::createFromPath(__DIR__ . '/test/y_test.csv')
-    ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
-
-$training = Labeled::fromIterator($trainSamples, $trainLabels);
-
-$testing = Labeled::fromIterator($testSamples, $testLabels);
-
-$estimator = new Pipeline([
-    new NumericStringConverter(),
-    new GaussianRandomProjector(120),
-    new ZScaleStandardizer(),
-], new SoftmaxClassifier(100, new Adam(0.001)));
+$estimator = new PersistentModel(
+    new Pipeline([
+        new NumericStringConverter(),
+        new GaussianRandomProjector(110),
+        new ZScaleStandardizer(),
+    ], new SoftmaxClassifier(200, new Momentum(0.001))),
+    new Filesystem('har.model')
+);
 
 $estimator->setLogger(new Screen('HAR'));
 
-$estimator->train($training);
+$estimator->train($dataset);
 
 $losses = $estimator->steps();
 
@@ -61,15 +48,6 @@ $writer->insertAll(array_map(null, $losses, []));
 
 echo 'Progress saved to progress.csv' . PHP_EOL;
 
-$predictions = $estimator->predict($testing);
-
-$report = new AggregateReport([
-    new MulticlassBreakdown(),
-    new ConfusionMatrix(),
-]);
-
-$results = $report->generate($predictions, $testing->labels());
-
-file_put_contents('report.json', json_encode($results, JSON_PRETTY_PRINT));
-
-echo 'Report saved to report.json' . PHP_EOL;
+if (strtolower(readline('Save this model? (y|[n]): ')) === 'y') {
+    $estimator->save();
+}

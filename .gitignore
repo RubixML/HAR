@@ -1,8 +1,8 @@
 /vendor
 composer.lock
 progress.csv
-embedding.csv
 report.json
 .vscode
 .vs
 *.model
+*.old
