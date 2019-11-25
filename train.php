@@ -2,9 +2,9 @@
 
 include __DIR__ . '/vendor/autoload.php';
 
-use Rubix\ML\Pipeline;
-use Rubix\ML\PersistentModel;
 use Rubix\ML\Datasets\Labeled;
+use Rubix\ML\PersistentModel;
+use Rubix\ML\Pipeline;
 use Rubix\ML\Transformers\NumericStringConverter;
 use Rubix\ML\Transformers\GaussianRandomProjector;
 use Rubix\ML\Transformers\ZScaleStandardizer;
@@ -39,6 +39,8 @@ $estimator = new PersistentModel(
 );
 
 $estimator->setLogger(new Screen('HAR'));
+
+echo 'Training ...' . PHP_EOL;
 
 $estimator->train($dataset);
 
