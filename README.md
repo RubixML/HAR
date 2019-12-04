@@ -32,11 +32,9 @@ The data are given to us in multiple CSV (comma-separated values) files within t
 ```php
 use League\Csv\Reader;
 
-$samples = Reader::createFromPath('train/samples.csv')
-    ->setDelimiter(',')->setEnclosure('"')->getRecords();
+$samples = Reader::createFromPath('train/samples.csv')->getRecords();
 
-$labels = Reader::createFromPath('train/labels.csv')
-    ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
+$labels = Reader::createFromPath('train/labels.csv')->fetchColumn(0);
 ```
 
 The `getRecords()` and `fetchColumn()` methods on the Reader instance both return iterators which we'll use to instantiate a new [Labeled](https://docs.rubixml.com/en/latest/datasets/labeled.html) dataset object using the static `fromIterator()` method.
@@ -127,11 +125,9 @@ The authors of the dataset provide an additional 2,947 labeled testing samples t
 ```php
 use League\Csv\Reader;
 
-$samples = Reader::createFromPath('test/samples.csv')
-    ->setDelimiter(',')->setEnclosure('"')->getRecords();
+$samples = Reader::createFromPath('test/samples.csv')->getRecords();
 
-$labels = Reader::createFromPath('test/labels.csv')
-    ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
+$labels = Reader::createFromPath('test/labels.csv')->fetchColumn(0);
 ```
 
 Then, we'll instantiate a new Labeled dataset containing the testing samples along with their ground-truth labels.

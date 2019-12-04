@@ -14,11 +14,9 @@ ini_set('memory_limit', '-1');
 
 echo 'Loading data into memory ...' . PHP_EOL;
 
-$samples = Reader::createFromPath('test/samples.csv')
-    ->setDelimiter(',')->setEnclosure('"')->getRecords();
+$samples = Reader::createFromPath('test/samples.csv')->getRecords();
 
-$labels = Reader::createFromPath('test/labels.csv')
-    ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
+$labels = Reader::createFromPath('test/labels.csv')->fetchColumn(0);
 
 $dataset = Labeled::fromIterator($samples, $labels);
 
