@@ -1,5 +1,5 @@
 # Rubix ML - Human Activity Recognizer
-This example project demonstrates the problem of human activity recognition (HAR) using mobile phone sensor data recorded from the internal inertial measurement unit (IMU). The training data are the human annotated sensor readings of 30 volunteers while performing various tasks such as sitting, standing, walking, and laying down. Each sample contains a window of 561 features, however, we demonstrate that with a technique called *random projection* we can reduce the dimensionality without any loss in accuracy. The learner we'll train to accomplish this task is a [Softmax Classifier](https://docs.rubixml.com/en/latest/classifiers/softmax-classifier.html) which is the multiclass generalization of [Logistic Regression](https://docs.rubixml.com/en/latest/classifiers/logistic-regression.html).
+An example project that demonstrates the problem of human activity recognition (HAR) using mobile phone sensor data recorded from the internal inertial measurement unit (IMU). The training data are the human-annotated sensor readings of 30 volunteers while performing various tasks such as sitting, standing, walking, and laying down. Each sample contains a window of 561 features, however, we demonstrate that with a technique called *random projection* we can reduce the dimensionality without any loss in accuracy. The learner we'll train to accomplish this task is a [Softmax Classifier](https://docs.rubixml.com/en/latest/classifiers/softmax-classifier.html) which is the multiclass generalization of the binary classifier [Logistic Regression](https://docs.rubixml.com/en/latest/classifiers/logistic-regression.html).
 
 - **Difficulty**: Medium
 - **Training time**: Minutes
@@ -17,7 +17,7 @@ $ composer install
 ```
 
 ## Requirements
-- [PHP](https://php.net) 7.1.3 or above
+- [PHP](https://php.net) 7.2 or above
 
 ## Tutorial
 
@@ -27,46 +27,32 @@ The experiments have been carried out with a group of 30 volunteers within an ag
 > **Note:** The source code for this example can be found in the [train.php](https://github.com/RubixML/HAR/blob/master/train.php) file in project root.
 
 ### Extracting the Data
-The data are given to us in multiple CSV (comma-separated values) files within the `train` and `test` folders in the project root. Each folder contains a `samples.csv` and `labels.csv` file. Let us start by importing the data using The PHP League's [CSV Reader](https://csv.thephpleague.com/) to help us extract the data from the source files.
-
-```php
-use League\Csv\Reader;
-
-$samples = Reader::createFromPath('train/samples.csv')
-    ->setDelimiter(',')->setEnclosure('"')->getRecords();
-
-$labels = Reader::createFromPath('train/labels.csv')
-    ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
-```
-
-The `getRecords()` and `fetchColumn()` methods on the Reader instance both return iterators which we'll use to instantiate a new [Labeled](https://docs.rubixml.com/en/latest/datasets/labeled.html) dataset object using the static `fromIterator()` method.
+The data are given to us in two NDJSON (newline delimited JSON) files inside the project root. One file contains the training samples and the other is for testing. We'll use the [NDJSON](https://docs.rubixml.com/en/latest/extractors/ndjson.html) extractor provided in Rubix ML to import the training data into a new [Labeled](https://docs.rubixml.com/en/latest/datasets/labeled.html) dataset object. Since extractors are iterators, we can pass the extractor directly to the `fromIterator()` factory method. 
 
 ```php
 use Rubix\ML\Datasets\Labeled;
+use Rubix\ML\Extractors\NDJSON;
 
-$dataset = Labeled::fromIterator($samples, $labels);
+$dataset = Labeled::fromIterator(new NDJSON('train.ndjson'));
 ```
 
 ### Dataset Preparation
-The first thing we need to do to prepare the dataset is to convert all numeric strings to their integer and floating point counterparts. This step is necessary because the CSV Reader imports everything as a string by default. The [Numeric String Converter](https://docs.rubixml.com/en/latest/transformers/numeric-string-converter.html) will handle the conversion for us.
-
 In machine learning, dimensionality reduction is often employed to compress the input samples such that most or all of the information is preserved. By reducing the number of input features, we can speed up the training process. [Random Projection](https://en.wikipedia.org/wiki/Random_projection) is a computationally efficient unsupervised dimensionality reduction technique based on the [Johnson-Lindenstrauss lemma](https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma) which states that a set of points in a high-dimensional space can be embedded into a space of lower dimensionality in such a way that distances between the points are nearly preserved. To apply dimensionality reduction to the HAR dataset we'll use a  [Gaussian Random Projector](https://docs.rubixml.com/en/latest/transformers/gaussian-random-projector.html) as part of our pipeline. Gaussian Random Projector applies a randomized linear transformation sampled from a Gaussian distribution to the sample matrix. We'll set the target number of dimensions to 110 which is less than 20% of the original input dimensionality.
 
 Lastly, we'll center and scale the dataset using [Z Scale Standardizer](https://docs.rubixml.com/en/latest/transformers/z-scale-standardizer.html) such that the values of the features have 0 mean and unit variance. This last step will help the learner converge quicker during training.
 
-We'll wrap these transformations in a [Pipeline](https://docs.rubixml.com/en/latest/pipeline.html) so that they can be persisted along with the model.
+We'll wrap these transformations in a [Pipeline](https://docs.rubixml.com/en/latest/pipeline.html) so that their fittings can be persisted along with the model.
 
 ### Instantiating the Learner
-We'll now turn our attention to setting the hyper-parameters of the learner. [Softmax Classifier](https://docs.rubixml.com/en/latest/classifiers/softmax-classifier.html) is a type of single layer neural network with a [Softmax](https://docs.rubixml.com/en/latest/neural-network/activation-functions/softmax.html) output layer. Training is done iteratively using mini batch Gradient Descent where at each epoch the model parameters take a step in the direction of the minimum of the error gradient produced by a user-defined cost function such as [Cross Entropy](https://docs.rubixml.com/en/latest/neural-network/cost-functions/cross-entropy.html).
+Now, we'll turn our attention to setting the hyper-parameters of the learner. [Softmax Classifier](https://docs.rubixml.com/en/latest/classifiers/softmax-classifier.html) is a type of single layer neural network with a [Softmax](https://docs.rubixml.com/en/latest/neural-network/activation-functions/softmax.html) output layer. Training is done iteratively using Mini Batch Gradient Descent where at each epoch the model parameters take a step in the direction of the minimum of the error gradient produced by a user-defined cost function such as [Cross Entropy](https://docs.rubixml.com/en/latest/neural-network/cost-functions/cross-entropy.html).
 
-The first hyper-parameter of Softmax Classifier is the *batch size* which controls the number of samples that are feed into the network at a time. The batch size trades off training speed for smoothness of the gradient estimate. A batch size of 200 works pretty well for this example so we'll choose that value but feel free to experiment with other settings of the batch size on your own.
+The first hyper-parameter of Softmax Classifier is the `batch size` which controls the number of samples that are feed into the network at a time. The batch size trades off training speed for smoothness of the gradient estimate. A batch size of 200 works pretty well for this example so we'll choose that value but feel free to experiment with other settings of the batch size on your own.
 
-The next hyper-parameter is the Gradient Descent optimizer and associated *learning rate*. The [Momentum](https://docs.rubixml.com/en/latest/neural-network/optimizers/momentum.html) optimizer is an adaptive optimizer that adds a momentum force to every parameter update. Momentum helps to speed up training by traversing the gradient quicker. It uses a global learning rate that can be set by the user and typically ranges from 0.1 to 0.0001. The default setting of 0.001 works well for this example so we'll leave it at that.
+The next hyper-parameter is the Gradient Descent `optimizer` and associated `learning rate`. The [Momentum](https://docs.rubixml.com/en/latest/neural-network/optimizers/momentum.html) optimizer is an adaptive optimizer that adds a momentum force to every parameter update. Momentum helps to speed up training by traversing the gradient quicker. It uses a global learning rate that can be set by the user and typically ranges from 0.1 to 0.0001. The default setting of 0.001 works well for this example so we'll leave it at that.
 
 ```php
 use Rubix\ML\PersistentModel;
 use Rubix\ML\Pipeline;
-use Rubix\ML\Transformers\NumericStringConverter;
 use Rubix\ML\Transformers\GaussianRandomProjector;
 use Rubix\ML\Transformers\ZScaleStandardizer;
 use Rubix\ML\Classifiers\SoftmaxClassifier;
@@ -75,7 +61,6 @@ use Rubix\ML\Persisters\Filesystem;
 
 $estimator = new PersistentModel(
     new Pipeline([
-        new NumericStringConverter(),
         new GaussianRandomProjector(110),
         new ZScaleStandardizer(),
     ], new SoftmaxClassifier(200, new Momentum(0.001))),
@@ -120,30 +105,19 @@ $estimator->save();
 ```
 
 ### Cross Validation
-The authors of the dataset provide an additional 2,947 labeled testing samples that we'll use to test the model. We've held these samples out until now because we wanted to be able to test the model on samples it has never seen before. We'll start by extracting the testing samples and labels from their source files.
+The authors of the dataset provide an additional 2,947 labeled testing samples that we'll use to test the model. We've held these samples out until now because we wanted to be able to test the model on samples it has never seen before. Start by extracting the testing samples and ground-truth labels from the `test.ndjson` file.
 
 > **Note:** The source code for this example can be found in the [validate.php](https://github.com/RubixML/HAR/blob/master/validate.php) file in project root.
 
 ```php
-use League\Csv\Reader;
-
-$samples = Reader::createFromPath('test/samples.csv')
-    ->setDelimiter(',')->setEnclosure('"')->getRecords();
-
-$labels = Reader::createFromPath('test/labels.csv')
-    ->setDelimiter(',')->setEnclosure('"')->fetchColumn(0);
-```
-
-Then, we'll instantiate a new Labeled dataset containing the testing samples along with their ground-truth labels.
-
-```php
 use Rubix\ML\Datasets\Labeled;
+use Rubix\ML\Extractors\NDJSON;
 
-$dataset = Labeled::fromIterator($samples, $labels);
+$dataset = Labeled::fromIterator(new NDJSON('test.ndjson'));
 ```
 
 ### Load Model from Storage
-To load the Softmax Classifier with the transformer pipeline we instantiated ealier, call the static `load()` method on the [Persistent Model](https://docs.rubixml.com/en/latest/persistent-model.html) class with a Persister instance pointing to the model in storage.
+To load the estimator/transformer pipeline we instantiated earlier, call the static `load()` method on the [Persistent Model](https://docs.rubixml.com/en/latest/persistent-model.html) class with a Persister instance pointing to the model in storage.
 
 ```php
 use Rubix\ML\PersistentModel;
@@ -153,7 +127,7 @@ $estimator = PersistentModel::load(new Filesystem('har.model'));
 ```
 
 ### Making Predictions
-To obtain the predictions from the model, pass the testing set to the `predict()` method on the loaded estimator instance.
+To obtain the predictions from the model, pass the testing set to the `predict()` method on the estimator instance.
 
 ```php
 $predictions = $estimator->predict($dataset);
@@ -210,7 +184,7 @@ The output of the report should look something like the output below. Nice work!
 ```
 
 ### Next Steps
-Now that you've completed this tutorial on classifying human activity using a Softmax Classifier, see if you can acheive better results by fine-tuning some of the hyper-parameters. See how much dimensionality redution effects the final accuracy of the estimator by removing Gaussian Random Projector from the pipeline. Are there other dimensionality reduction techniques that work better?
+Now that you've completed this tutorial on classifying human activity using a Softmax Classifier, see if you can achieve better results by fine-tuning some of the hyper-parameters. See how much dimensionality reduction effects the final accuracy of the estimator by removing Gaussian Random Projector from the pipeline. Are there other dimensionality reduction techniques that work better?
 
 ## Original Dataset
 Contact: Jorge L. Reyes-Ortiz(1,2), Davide Anguita(1), Alessandro Ghio(1), Luca Oneto(1) and Xavier Parra(2) Institutions: 1 - Smartlab - Non-Linear Complex Systems Laboratory DITEN - University  degli Studi di Genova, Genoa (I-16145), Italy. 2 - CETpD - Technical Research Centre for Dependency Care and Autonomous Living Polytechnic University of Catalonia (BarcelonaTech). Vilanova i la Geltrú (08800), Spain activityrecognition '@' smartlab.ws
