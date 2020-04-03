@@ -26,7 +26,7 @@ $estimator = new PersistentModel(
     new Pipeline([
         new GaussianRandomProjector(110),
         new ZScaleStandardizer(),
-    ], new SoftmaxClassifier(200, new Momentum(0.001))),
+    ], new SoftmaxClassifier(256, new Momentum(0.001))),
     new Filesystem('har.model')
 );
 

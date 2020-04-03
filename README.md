@@ -46,7 +46,7 @@ We'll wrap these transformations in a [Pipeline](https://docs.rubixml.com/en/lat
 ### Instantiating the Learner
 Now, we'll turn our attention to setting the hyper-parameters of the learner. [Softmax Classifier](https://docs.rubixml.com/en/latest/classifiers/softmax-classifier.html) is a type of single layer neural network with a [Softmax](https://docs.rubixml.com/en/latest/neural-network/activation-functions/softmax.html) output layer. Training is done iteratively using Mini Batch Gradient Descent where at each epoch the model parameters take a step in the direction of the minimum of the error gradient produced by a user-defined cost function such as [Cross Entropy](https://docs.rubixml.com/en/latest/neural-network/cost-functions/cross-entropy.html).
 
-The first hyper-parameter of Softmax Classifier is the `batch size` which controls the number of samples that are feed into the network at a time. The batch size trades off training speed for smoothness of the gradient estimate. A batch size of 200 works pretty well for this example so we'll choose that value but feel free to experiment with other settings of the batch size on your own.
+The first hyper-parameter of Softmax Classifier is the `batch size` which controls the number of samples that are feed into the network at a time. The batch size trades off training speed for smoothness of the gradient estimate. A batch size of 256 works pretty well for this example so we'll choose that value but feel free to experiment with other settings of the batch size on your own.
 
 The next hyper-parameter is the Gradient Descent `optimizer` and associated `learning rate`. The [Momentum](https://docs.rubixml.com/en/latest/neural-network/optimizers/momentum.html) optimizer is an adaptive optimizer that adds a momentum force to every parameter update. Momentum helps to speed up training by traversing the gradient quicker. It uses a global learning rate that can be set by the user and typically ranges from 0.1 to 0.0001. The default setting of 0.001 works well for this example so we'll leave it at that.
 
@@ -63,7 +63,7 @@ $estimator = new PersistentModel(
     new Pipeline([
         new GaussianRandomProjector(110),
         new ZScaleStandardizer(),
-    ], new SoftmaxClassifier(200, new Momentum(0.001))),
+    ], new SoftmaxClassifier(256, new Momentum(0.001))),
     new Filesystem('har.model')
 );
 ```
