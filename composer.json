@@ -3,11 +3,12 @@
     "type": "project",
     "description": "Recognize one of six human activities such as standing, sitting, and walking using a Softmax Classifier trained on mobile phone sensor data.",
     "homepage": "https://github.com/RubixML/HAR",
-    "license": "MIT",
+    "license": "Apache-2.0",
     "keywords": [
-        "machine", "learning", "data", "science", "mining", "predictive", "modeling", "ai",
-        "classification", "softmax", "mobile", "phone", "sensor", "human", "activity", "imu",
-        "inertial-measurement-unit"
+        "classification", "classifier", "cross validation", "dataset", "data science",
+        "dimensionality reduction", "example project", "har", "human activity recognition",
+        "imu sensor", "machine learning", "ml", "mobile phone sensor", "momentum", "php", "php ml",
+        "rubix ml", "rubixml", "softmax", "tutorial"
     ],
     "authors": [
         {

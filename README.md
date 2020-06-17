@@ -3,7 +3,13 @@ An example project that demonstrates the problem of human activity recognition (
 
 - **Difficulty**: Medium
 - **Training time**: Minutes
-- **Memory needed**: 1G
+
+## Requirements
+- [PHP](https://php.net) 7.2 or above
+
+#### Recommended
+- [Tensor extension](https://github.com/RubixML/Tensor) for faster training and inference
+- 1G of system memory or more
 
 ## Installation
 Clone the repository locally using [Git](https://git-scm.com/):
@@ -15,9 +21,6 @@ Install dependencies using [Composer](https://getcomposer.org/):
 ```sh
 $ composer install
 ```
-
-## Requirements
-- [PHP](https://php.net) 7.2 or above
 
 ## Tutorial
 
@@ -191,3 +194,6 @@ Contact: Jorge L. Reyes-Ortiz(1,2), Davide Anguita(1), Alessandro Ghio(1), Luca 
 
 ## References:
 >- Davide Anguita, Alessandro Ghio, Luca Oneto, Xavier Parra and Jorge L. Reyes-Ortiz. A Public Domain Dataset for Human Activity Recognition Using Smartphones. 21th European Symposium on Artificial Neural Networks, Computational Intelligence and Machine Learning, ESANN 2013. Bruges, Belgium 24-26 April 2013.
+
+## License
+The code is licensed [Apache 2.0](LICENSE.md) and the tutorial is licensed [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
