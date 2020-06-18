@@ -4,6 +4,7 @@
     "description": "Recognize one of six human activities such as standing, sitting, and walking using a Softmax Classifier trained on mobile phone sensor data.",
     "homepage": "https://github.com/RubixML/HAR",
     "license": "Apache-2.0",
+    "readme": "README.md",
     "keywords": [
         "classification", "classifier", "cross validation", "dataset", "data science",
         "dimensionality reduction", "example project", "har", "human activity recognition",
@@ -23,8 +24,17 @@
         "league/csv": "^9.5",
         "rubix/ml": "^0.1.0-rc2"
     },
+    "suggest": {
+        "ext-tensor": "For faster training and inference"
+    },
+    "scripts": {
+        "train": "@php train.php",
+        "test": "@php validate.php"
+    },
     "config": {
         "preferred-install": "dist",
         "sort-packages": true
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

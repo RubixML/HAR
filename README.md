@@ -4,23 +4,18 @@ An example project that demonstrates the problem of human activity recognition (
 - **Difficulty**: Medium
 - **Training time**: Minutes
 
+## Installation
+Clone the project locally using [Composer](https://getcomposer.org/):
+```sh
+$ composer create-project rubix/har
+```
+
 ## Requirements
 - [PHP](https://php.net) 7.2 or above
 
 #### Recommended
 - [Tensor extension](https://github.com/RubixML/Tensor) for faster training and inference
 - 1G of system memory or more
-
-## Installation
-Clone the repository locally using [Git](https://git-scm.com/):
-```sh
-$ git clone https://github.com/RubixML/HAR
-```
-
-Install dependencies using [Composer](https://getcomposer.org/):
-```sh
-$ composer install
-```
 
 ## Tutorial
 
@@ -107,6 +102,11 @@ Since we wrapped the estimator in a Persistent Model wrapper, we can save the mo
 $estimator->save();
 ```
 
+To run the training script, call it from the command line like this.
+```sh
+$ php train.php
+```
+
 ### Cross Validation
 The authors of the dataset provide an additional 2,947 labeled testing samples that we'll use to test the model. We've held these samples out until now because we wanted to be able to test the model on samples it has never seen before. Start by extracting the testing samples and ground-truth labels from the `test.ndjson` file.
 
@@ -154,6 +154,11 @@ Now, generate the report using the predictions and labels from the testing set.
 
 ```php
 $results = $report->generate($predictions, $dataset->labels());
+```
+
+To execute the validation script, enter the following command at the command prompt.
+```php
+$ php validate.php
 ```
 
 The output of the report should look something like the output below. Nice work! As you can see, our estimator is about 97% accurate and has very good specificity and negative predictive value.
