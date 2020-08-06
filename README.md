@@ -74,7 +74,7 @@ Since Softmax Classifier implements the [Verbose](https://docs.rubixml.com/en/la
 ```php
 use Rubix\ML\Other\Loggers\Screen;
 
-$estimator->setLogger(new Screen('HAR'));
+$estimator->setLogger(new Screen());
 ```
 
 ### Training
@@ -89,6 +89,17 @@ During training, the learner will record the training loss at each epoch which w
 
 ```php
 $losses = $estimator->steps();
+```
+
+Then we'll save the losses to a CSV file using the `toCSV` method on the [Unlabeled]() dataset object.
+
+```php
+use Rubix\ML\Datasets\Unlabeled;
+use function Rubix\ML\array_transpose;
+
+Unlabeled::build(array_transpose([$losses]))
+    ->toCSV(['losses'])
+    ->write('progress.csv');
 ```
 
 This is an example of a line plot of the Cross Entropy cost function from a training session. As you can see, the model learns quickly during the early epochs with slower training nearing the final stage as the learner fine-tunes the model parameters.
@@ -150,10 +161,14 @@ $report = new AggregateReport([
 ]);
 ```
 
-Now, generate the report using the predictions and labels from the testing set.
+Now, generate the report using the predictions and labels from the testing set. In addition, we'll echo the report to the console and save the results to a JSON file for reference later.
 
 ```php
 $results = $report->generate($predictions, $dataset->labels());
+
+echo $results;
+
+$results->toJSON()->write('report.json');
 ```
 
 To execute the validation script, enter the following command at the command prompt.
@@ -187,7 +202,6 @@ The output of the report should look something like the output below. Nice work!
             "cardinality": 2947
         },
     }
-
 ]
 ```
 

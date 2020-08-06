@@ -12,7 +12,7 @@ use Rubix\ML\Classifiers\SoftmaxClassifier;
 use Rubix\ML\NeuralNet\Optimizers\Momentum;
 use Rubix\ML\Persisters\Filesystem;
 use Rubix\ML\Other\Loggers\Screen;
-use League\Csv\Writer;
+use Rubix\ML\Datasets\Unlabeled;
 
 use function Rubix\ML\array_transpose;
 
@@ -30,7 +30,7 @@ $estimator = new PersistentModel(
     new Filesystem('har.model')
 );
 
-$estimator->setLogger(new Screen('HAR'));
+$estimator->setLogger(new Screen());
 
 echo 'Training ...' . PHP_EOL;
 
@@ -38,10 +38,9 @@ $estimator->train($dataset);
 
 $losses = $estimator->steps();
 
-$writer = Writer::createFromPath('progress.csv', 'w+');
-
-$writer->insertOne(['loss']);
-$writer->insertAll(array_transpose([$losses]));
+Unlabeled::build(array_transpose([$losses]))
+    ->toCSV(['losses'])
+    ->write('progress.csv');
 
 echo 'Progress saved to progress.csv' . PHP_EOL;
 
