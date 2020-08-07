@@ -2,6 +2,7 @@
 
 include __DIR__ . '/vendor/autoload.php';
 
+use Rubix\ML\Other\Loggers\Screen;
 use Rubix\ML\Datasets\Labeled;
 use Rubix\ML\Extractors\NDJSON;
 use Rubix\ML\PersistentModel;
@@ -11,14 +12,15 @@ use Rubix\ML\Transformers\ZScaleStandardizer;
 use Rubix\ML\Classifiers\SoftmaxClassifier;
 use Rubix\ML\NeuralNet\Optimizers\Momentum;
 use Rubix\ML\Persisters\Filesystem;
-use Rubix\ML\Other\Loggers\Screen;
 use Rubix\ML\Datasets\Unlabeled;
 
 use function Rubix\ML\array_transpose;
 
 ini_set('memory_limit', '-1');
 
-echo 'Loading data into memory ...' . PHP_EOL;
+$logger = new Screen();
+
+$logger->info('Loading data into memory');
 
 $dataset = Labeled::fromIterator(new NDJSON('train.ndjson'));
 
@@ -30,9 +32,7 @@ $estimator = new PersistentModel(
     new Filesystem('har.model')
 );
 
-$estimator->setLogger(new Screen());
-
-echo 'Training ...' . PHP_EOL;
+$estimator->setLogger($logger);
 
 $estimator->train($dataset);
 
@@ -42,7 +42,7 @@ Unlabeled::build(array_transpose([$losses]))
     ->toCSV(['losses'])
     ->write('progress.csv');
 
-echo 'Progress saved to progress.csv' . PHP_EOL;
+$logger->info('Progress saved to progress.csv');
 
 if (strtolower(readline('Save this model? (y|[n]): ')) === 'y') {
     $estimator->save();
