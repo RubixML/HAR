@@ -3,7 +3,7 @@
     "type": "project",
     "description": "Recognize one of six human activities such as standing, sitting, and walking using a Softmax Classifier trained on mobile phone sensor data.",
     "homepage": "https://github.com/RubixML/HAR",
-    "license": "Apache-2.0",
+    "license": "MIT",
     "readme": "README.md",
     "keywords": [
         "classification", "classifier", "cross validation", "dataset", "data science",
@@ -14,17 +14,13 @@
     "authors": [
         {
             "name": "Andrew DalPino",
-            "email": "me@andrewdalpino.com",
-            "homepage": "https://andrewdalpino.com",
+            "homepage": "https://github.com/andrewdalpino",
             "role": "Lead Engineer"
         }
     ],
     "require": {
         "php": ">=7.2",
-        "rubix/ml": "^0.1.0"
-    },
-    "suggest": {
-        "ext-tensor": "For faster training and inference"
+        "rubix/ml": "^0.3.0"
     },
     "scripts": {
         "train": "@php train.php",

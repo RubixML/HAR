@@ -104,7 +104,7 @@ Unlabeled::build(array_transpose([$losses]))
 
 This is an example of a line plot of the Cross Entropy cost function from a training session. As you can see, the model learns quickly during the early epochs with slower training nearing the final stage as the learner fine-tunes the model parameters.
 
-![Cross Entropy Loss](https://raw.githubusercontent.com/RubixML/HAR/master/docs/images/training-loss.svg?sanitize=true)
+![Cross Entropy Loss](https://raw.githubusercontent.com/RubixML/HAR/master/docs/images/training-loss.png)
 
 ### Saving
 Since we wrapped the estimator in a Persistent Model wrapper, we can save the model by calling the `save()` method on the estimator instance.
@@ -215,4 +215,4 @@ Contact: Jorge L. Reyes-Ortiz(1,2), Davide Anguita(1), Alessandro Ghio(1), Luca 
 >- Davide Anguita, Alessandro Ghio, Luca Oneto, Xavier Parra and Jorge L. Reyes-Ortiz. A Public Domain Dataset for Human Activity Recognition Using Smartphones. 21th European Symposium on Artificial Neural Networks, Computational Intelligence and Machine Learning, ESANN 2013. Bruges, Belgium 24-26 April 2013.
 
 ## License
-The code is licensed [MIT](LICENSE.md) and the tutorial is licensed [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
+The code is licensed [MIT](LICENSE) and the tutorial is licensed [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
