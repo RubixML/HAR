@@ -5,5 +5,5 @@ report.json
 embedding.csv
 .vscode
 .vs
-*.model
+*.rbx
 *.old

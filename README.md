@@ -11,7 +11,7 @@ $ composer create-project rubix/har
 ```
 
 ## Requirements
-- [PHP](https://php.net) 7.2 or above
+- [PHP](https://php.net) 7.4 or above
 
 #### Recommended
 - [Tensor extension](https://github.com/RubixML/Tensor) for faster training and inference
@@ -62,7 +62,7 @@ $estimator = new PersistentModel(
         new GaussianRandomProjector(110),
         new ZScaleStandardizer(),
     ], new SoftmaxClassifier(256, new Momentum(0.001))),
-    new Filesystem('har.model')
+    new Filesystem('har.rbx')
 );
 ```
 
@@ -72,7 +72,7 @@ We'll wrap the entire pipeline in a [Persistent Model](https://docs.rubixml.com/
 Since Softmax Classifier implements the [Verbose](https://docs.rubixml.com/latest/verbose.html) interface, we can log training progress in real-time. To set a logger, pass in a [PSR-3](https://www.php-fig.org/psr/psr-3/) compatible logger instance to the `setLogger()` method on the learner instance. The [Screen](https://docs.rubixml.com/latest/other/loggers/screen.html) logger that comes built-in with Rubix ML is a good default choice if you just need something simple to output to the console.
 
 ```php
-use Rubix\ML\Other\Loggers\Screen;
+use Rubix\ML\Loggers\Screen;
 
 $estimator->setLogger(new Screen());
 ```
@@ -85,21 +85,14 @@ $estimator->train($dataset);
 ```
 
 ### Training Loss
-During training, the learner will record the training loss at each epoch which we can plot to visualize the training progress. The training loss is the value of the cost function at each epoch and can be interpretted as the amount of error left in the model after an update step. To return an array with the values of the cost function at each epoch call the `steps()` method on the learner.
+During training, the learner will record the training loss at each epoch which we can plot to visualize the training progress. The training loss is the value of the cost function at each epoch and can be interpretted as the amount of error left in the model after an update step. To return an array with the values of the cost function at each epoch call the `steps()` method on the learner. Then we'll save the losses to a CSV file using the writable CSV extractor.
 
 ```php
-$losses = $estimator->steps();
-```
+use Rubix\ML\Extractors\CSV;
 
-Then we'll save the losses to a CSV file using the `toCSV` method on the [Unlabeled]() dataset object.
+$extractor = new CSV('progress.csv', true);
 
-```php
-use Rubix\ML\Datasets\Unlabeled;
-use function Rubix\ML\array_transpose;
-
-Unlabeled::build(array_transpose([$losses]))
-    ->toCSV(['losses'])
-    ->write('progress.csv');
+$extractor->export($estimator->steps());
 ```
 
 This is an example of a line plot of the Cross Entropy cost function from a training session. As you can see, the model learns quickly during the early epochs with slower training nearing the final stage as the learner fine-tunes the model parameters.
@@ -137,7 +130,7 @@ To load the estimator/transformer pipeline we instantiated earlier, call the sta
 use Rubix\ML\PersistentModel;
 use Rubix\ML\Persisters\Filesystem;
 
-$estimator = PersistentModel::load(new Filesystem('har.model'));
+$estimator = PersistentModel::load(new Filesystem('har.rbx'));
 ```
 
 ### Making Predictions
@@ -164,11 +157,13 @@ $report = new AggregateReport([
 Now, generate the report using the predictions and labels from the testing set. In addition, we'll echo the report to the console and save the results to a JSON file for reference later.
 
 ```php
+use Rubix\ML\Persisters\Filesystem;
+
 $results = $report->generate($predictions, $dataset->labels());
 
 echo $results;
 
-$results->toJSON()->write('report.json');
+$results->toJSON()->saveTo(new Filesystem('report.json'));
 ```
 
 To execute the validation script, enter the following command at the command prompt.
