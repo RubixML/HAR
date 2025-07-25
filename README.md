@@ -1,5 +1,5 @@
 # Rubix ML - Human Activity Recognizer
-An example project that demonstrates the problem of human activity recognition (HAR) using mobile phone sensor data recorded from the internal inertial measurement unit (IMU). The training data are the human-annotated sensor readings of 30 volunteers while performing various tasks such as sitting, standing, walking, and laying down. Each sample contains a window of 561 features, however, we demonstrate that with a technique called *random projection* we can reduce the dimensionality without any loss in accuracy. The learner we'll train to accomplish this task is a [Softmax Classifier](https://docs.rubixml.com/latest/classifiers/softmax-classifier.html) which is the multiclass generalization of the binary classifier [Logistic Regression](https://docs.rubixml.com/latest/classifiers/logistic-regression.html).
+An example project that demonstrates the problem of human activity recognition (HAR) using mobile phone sensor data recorded from the internal inertial measurement unit (IMU). The training data are the human-annotated sensor readings of 30 volunteers while performing various tasks such as sitting, standing, walking, and laying down. Each sample contains a window of 561 features, however, we demonstrate that with a technique called *random projection* we can reduce the dimensionality without any loss in accuracy. The learner we'll train to accomplish this task is a [Softmax Classifier](https://rubixml.github.io/ML//latest/classifiers/softmax-classifier.html) which is the multiclass generalization of the binary classifier [Logistic Regression](https://rubixml.github.io/ML//latest/classifiers/logistic-regression.html).
 
 - **Difficulty**: Medium
 - **Training time**: Minutes
@@ -25,7 +25,7 @@ The experiments have been carried out with a group of 30 volunteers within an ag
 > **Note:** The source code for this example can be found in the [train.php](https://github.com/RubixML/HAR/blob/master/train.php) file in project root.
 
 ### Extracting the Data
-The data are given to us in two NDJSON (newline delimited JSON) files inside the project root. One file contains the training samples and the other is for testing. We'll use the [NDJSON](https://docs.rubixml.com/latest/extractors/ndjson.html) extractor provided in Rubix ML to import the training data into a new [Labeled](https://docs.rubixml.com/latest/datasets/labeled.html) dataset object. Since extractors are iterators, we can pass the extractor directly to the `fromIterator()` factory method. 
+The data are given to us in two NDJSON (newline delimited JSON) files inside the project root. One file contains the training samples and the other is for testing. We'll use the [NDJSON](https://rubixml.github.io/ML//latest/extractors/ndjson.html) extractor provided in Rubix ML to import the training data into a new [Labeled](https://rubixml.github.io/ML//latest/datasets/labeled.html) dataset object. Since extractors are iterators, we can pass the extractor directly to the `fromIterator()` factory method. 
 
 ```php
 use Rubix\ML\Datasets\Labeled;
@@ -35,18 +35,18 @@ $dataset = Labeled::fromIterator(new NDJSON('train.ndjson'));
 ```
 
 ### Dataset Preparation
-In machine learning, dimensionality reduction is often employed to compress the input samples such that most or all of the information is preserved. By reducing the number of input features, we can speed up the training process. [Random Projection](https://en.wikipedia.org/wiki/Random_projection) is a computationally efficient unsupervised dimensionality reduction technique based on the [Johnson-Lindenstrauss lemma](https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma) which states that a set of points in a high-dimensional space can be embedded into a space of lower dimensionality in such a way that distances between the points are nearly preserved. To apply dimensionality reduction to the HAR dataset we'll use a  [Gaussian Random Projector](https://docs.rubixml.com/latest/transformers/gaussian-random-projector.html) as part of our pipeline. Gaussian Random Projector applies a randomized linear transformation sampled from a Gaussian distribution to the sample matrix. We'll set the target number of dimensions to 110 which is less than 20% of the original input dimensionality.
+In machine learning, dimensionality reduction is often employed to compress the input samples such that most or all of the information is preserved. By reducing the number of input features, we can speed up the training process. [Random Projection](https://en.wikipedia.org/wiki/Random_projection) is a computationally efficient unsupervised dimensionality reduction technique based on the [Johnson-Lindenstrauss lemma](https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma) which states that a set of points in a high-dimensional space can be embedded into a space of lower dimensionality in such a way that distances between the points are nearly preserved. To apply dimensionality reduction to the HAR dataset we'll use a  [Gaussian Random Projector](https://rubixml.github.io/ML//latest/transformers/gaussian-random-projector.html) as part of our pipeline. Gaussian Random Projector applies a randomized linear transformation sampled from a Gaussian distribution to the sample matrix. We'll set the target number of dimensions to 110 which is less than 20% of the original input dimensionality.
 
-Lastly, we'll center and scale the dataset using [Z Scale Standardizer](https://docs.rubixml.com/latest/transformers/z-scale-standardizer.html) such that the values of the features have 0 mean and unit variance. This last step will help the learner converge quicker during training.
+Lastly, we'll center and scale the dataset using [Z Scale Standardizer](https://rubixml.github.io/ML//latest/transformers/z-scale-standardizer.html) such that the values of the features have 0 mean and unit variance. This last step will help the learner converge quicker during training.
 
-We'll wrap these transformations in a [Pipeline](https://docs.rubixml.com/latest/pipeline.html) so that their fittings can be persisted along with the model.
+We'll wrap these transformations in a [Pipeline](https://rubixml.github.io/ML//latest/pipeline.html) so that their fittings can be persisted along with the model.
 
 ### Instantiating the Learner
-Now, we'll turn our attention to setting the hyper-parameters of the learner. [Softmax Classifier](https://docs.rubixml.com/latest/classifiers/softmax-classifier.html) is a type of single layer neural network with a [Softmax](https://docs.rubixml.com/latest/neural-network/activation-functions/softmax.html) output layer. Training is done iteratively using Mini Batch Gradient Descent where at each epoch the model parameters take a step in the direction of the minimum of the error gradient produced by a user-defined cost function such as [Cross Entropy](https://docs.rubixml.com/latest/neural-network/cost-functions/cross-entropy.html).
+Now, we'll turn our attention to setting the hyper-parameters of the learner. [Softmax Classifier](https://rubixml.github.io/ML//latest/classifiers/softmax-classifier.html) is a type of single layer neural network with a [Softmax](https://rubixml.github.io/ML//latest/neural-network/activation-functions/softmax.html) output layer. Training is done iteratively using Mini Batch Gradient Descent where at each epoch the model parameters take a step in the direction of the minimum of the error gradient produced by a user-defined cost function such as [Cross Entropy](https://rubixml.github.io/ML//latest/neural-network/cost-functions/cross-entropy.html).
 
 The first hyper-parameter of Softmax Classifier is the `batch size` which controls the number of samples that are feed into the network at a time. The batch size trades off training speed for smoothness of the gradient estimate. A batch size of 256 works pretty well for this example so we'll choose that value but feel free to experiment with other settings of the batch size on your own.
 
-The next hyper-parameter is the Gradient Descent `optimizer` and associated `learning rate`. The [Momentum](https://docs.rubixml.com/latest/neural-network/optimizers/momentum.html) optimizer is an adaptive optimizer that adds a momentum force to every parameter update. Momentum helps to speed up training by traversing the gradient quicker. It uses a global learning rate that can be set by the user and typically ranges from 0.1 to 0.0001. The default setting of 0.001 works well for this example so we'll leave it at that.
+The next hyper-parameter is the Gradient Descent `optimizer` and associated `learning rate`. The [Momentum](https://rubixml.github.io/ML//latest/neural-network/optimizers/momentum.html) optimizer is an adaptive optimizer that adds a momentum force to every parameter update. Momentum helps to speed up training by traversing the gradient quicker. It uses a global learning rate that can be set by the user and typically ranges from 0.1 to 0.0001. The default setting of 0.001 works well for this example so we'll leave it at that.
 
 ```php
 use Rubix\ML\PersistentModel;
@@ -66,10 +66,10 @@ $estimator = new PersistentModel(
 );
 ```
 
-We'll wrap the entire pipeline in a [Persistent Model](https://docs.rubixml.com/latest/persistent-model.html) meta-estimator that adds the `save()` and `load()` methods to the base estimator. Persistent Model requires a [Persister](https://docs.rubixml.com/latest/persisters/api.html) object to tell it where to store the serialized model data. The [Filesystem](https://docs.rubixml.com/latest/persisters/filesystem.html) persister saves and loads the model data to a file located at a user-specified path in storage.
+We'll wrap the entire pipeline in a [Persistent Model](https://rubixml.github.io/ML//latest/persistent-model.html) meta-estimator that adds the `save()` and `load()` methods to the base estimator. Persistent Model requires a [Persister](https://rubixml.github.io/ML//latest/persisters/api.html) object to tell it where to store the serialized model data. The [Filesystem](https://rubixml.github.io/ML//latest/persisters/filesystem.html) persister saves and loads the model data to a file located at a user-specified path in storage.
 
 ### Setting a Logger
-Since Softmax Classifier implements the [Verbose](https://docs.rubixml.com/latest/verbose.html) interface, we can log training progress in real-time. To set a logger, pass in a [PSR-3](https://www.php-fig.org/psr/psr-3/) compatible logger instance to the `setLogger()` method on the learner instance. The [Screen](https://docs.rubixml.com/latest/other/loggers/screen.html) logger that comes built-in with Rubix ML is a good default choice if you just need something simple to output to the console.
+Since Softmax Classifier implements the [Verbose](https://rubixml.github.io/ML//latest/verbose.html) interface, we can log training progress in real-time. To set a logger, pass in a [PSR-3](https://www.php-fig.org/psr/psr-3/) compatible logger instance to the `setLogger()` method on the learner instance. The [Screen](https://rubixml.github.io/ML//latest/other/loggers/screen.html) logger that comes built-in with Rubix ML is a good default choice if you just need something simple to output to the console.
 
 ```php
 use Rubix\ML\Loggers\Screen;
@@ -124,7 +124,7 @@ $dataset = Labeled::fromIterator(new NDJSON('test.ndjson'));
 ```
 
 ### Load Model from Storage
-To load the estimator/transformer pipeline we instantiated earlier, call the static `load()` method on the [Persistent Model](https://docs.rubixml.com/latest/persistent-model.html) class with a Persister instance pointing to the model in storage.
+To load the estimator/transformer pipeline we instantiated earlier, call the static `load()` method on the [Persistent Model](https://rubixml.github.io/ML//latest/persistent-model.html) class with a Persister instance pointing to the model in storage.
 
 ```php
 use Rubix\ML\PersistentModel;
@@ -141,7 +141,7 @@ $predictions = $estimator->predict($dataset);
 ```
 
 ### Generating the Report
-A cross validation report gives detailed statistics about the performance of the model given the ground-truth labels. A [Multiclass Breakdown](https://docs.rubixml.com/latest/cross-validation/reports/multiclass-breakdown.html) report breaks down the performance of the model at the class level and outputs metrics such as accuracy, precision, recall, and more. A [Confusion Matrix](https://docs.rubixml.com/latest/cross-validation/reports/confusion-matrix.html) is a table that compares the predicted labels to their actual labels to show if the model is having a hard time predicting certain classes. We'll wrap both reports in an [Aggregate Report](https://docs.rubixml.com/latest/cross-validation/reports/aggregate-report.html) so that we can generate both reports at the same time.
+A cross validation report gives detailed statistics about the performance of the model given the ground-truth labels. A [Multiclass Breakdown](https://rubixml.github.io/ML//latest/cross-validation/reports/multiclass-breakdown.html) report breaks down the performance of the model at the class level and outputs metrics such as accuracy, precision, recall, and more. A [Confusion Matrix](https://rubixml.github.io/ML//latest/cross-validation/reports/confusion-matrix.html) is a table that compares the predicted labels to their actual labels to show if the model is having a hard time predicting certain classes. We'll wrap both reports in an [Aggregate Report](https://rubixml.github.io/ML//latest/cross-validation/reports/aggregate-report.html) so that we can generate both reports at the same time.
 
 ```php
 use Rubix\ML\CrossValidation\Reports\AggregateReport;
