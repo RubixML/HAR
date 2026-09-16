@@ -21,6 +21,8 @@ $dataset = Labeled::fromIterator(new NDJSON('test.ndjson'));
 
 $estimator = PersistentModel::load(new Filesystem('har.rbx'));
 
+$estimator->cleanup();
+
 $logger->info('Making predictions');
 
 $predictions = $estimator->predict($dataset);

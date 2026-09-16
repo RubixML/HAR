@@ -11,6 +11,7 @@ use Rubix\ML\Transformers\GaussianRandomProjector;
 use Rubix\ML\Transformers\ZScaleStandardizer;
 use Rubix\ML\Classifiers\SoftmaxClassifier;
 use Rubix\ML\NeuralNet\Optimizers\Momentum;
+use Rubix\ML\NeuralNet\Optimizers\Schedulers\Constant;
 use Rubix\ML\Persisters\Filesystem;
 use Rubix\ML\Extractors\CSV;
 
@@ -26,7 +27,10 @@ $estimator = new PersistentModel(
     new Pipeline([
         new GaussianRandomProjector(110),
         new ZScaleStandardizer(),
-    ], new SoftmaxClassifier(256, new Momentum(0.001))),
+    ], new SoftmaxClassifier(
+        batchSize: 256,
+        optimizer: new Momentum(new Constant(0.001))
+    )),
     new Filesystem('har.rbx')
 );
 
@@ -36,7 +40,7 @@ $estimator->train($dataset);
 
 $extractor = new CSV('progress.csv', true);
 
-$extractor->export($estimator->steps());
+$extractor->export($estimator->progress());
 
 $logger->info('Progress saved to progress.csv');
 
