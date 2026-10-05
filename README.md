@@ -39,7 +39,7 @@ $dataset = Labeled::fromIterator(new NDJSON('train.ndjson'));
 
 ### Dataset Preparation
 
-In machine learning, dimensionality reduction is often employed to compress the input samples such that most or all of the information is preserved. By reducing the number of input features, we can speed up the training process. [Random Projection](https://en.wikipedia.org/wiki/Random_projection) is a computationally efficient unsupervised dimensionality reduction technique based on the [Johnson-Lindenstrauss lemma](https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma) which states that a set of points in a high-dimensional space can be embedded into a space of lower dimensionality in such a way that distances between the points are nearly preserved. To apply dimensionality reduction to the HAR dataset we'll use a  [Gaussian Random Projector](https://rubixml.github.io/ML/3.0/transformers/gaussian-random-projector.html) as part of our pipeline. Gaussian Random Projector applies a randomized linear transformation sampled from a Gaussian distribution to the sample matrix. We'll set the target number of dimensions to 110 which is less than 20% of the original input dimensionality.
+In machine learning, dimensionality reduction is often employed to compress the input samples such that most or all of the information is preserved. By reducing the number of input features, we can speed up the training process. [Random Projection](https://en.wikipedia.org/wiki/Random_projection) is a computationally efficient unsupervised dimensionality reduction technique based on the [Johnson-Lindenstrauss lemma](https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma) which states that a set of points in a high-dimensional space can be embedded into a space of lower dimensionality in such a way that distances between the points are nearly preserved. To apply dimensionality reduction to the HAR dataset we'll use a  [Gaussian Random Projector](https://rubixml.github.io/ML/3.0/transformers/gaussian-random-projector.html) as part of our pipeline. Gaussian Random Projector applies a randomized linear transformation sampled from a Gaussian distribution to the sample matrix. We'll set the target number of dimensions to 112 which is less than 20% of the original input dimensionality.
 
 Lastly, we'll center and scale the dataset using [Z Scale Standardizer](https://rubixml.github.io/ML/3.0/transformers/z-scale-standardizer.html) such that the values of the features have 0 mean and unit variance. This last step will help the learner converge quicker during training.
 
@@ -55,7 +55,8 @@ The next hyper-parameter is the Gradient Descent `optimizer` and its associated 
 
 ```php
 use Rubix\ML\PersistentModel;
-use Rubix\ML\Pipeline;
+use Rubix\ML\Transformers\PersistentTransformer;
+use Rubix\ML\Transformers\Pipeline;
 use Rubix\ML\Transformers\GaussianRandomProjector;
 use Rubix\ML\Transformers\ZScaleStandardizer;
 use Rubix\ML\Classifiers\SoftmaxClassifier;
@@ -63,19 +64,24 @@ use Rubix\ML\NeuralNet\Optimizers\Momentum;
 use Rubix\ML\NeuralNet\Optimizers\Schedulers\Constant;
 use Rubix\ML\Persisters\Filesystem;
 
-$estimator = new PersistentModel(
-    new Pipeline([
-        new GaussianRandomProjector(110),
+$transformer = new PersistentTransformer(
+    base: new Pipeline([
+        new GaussianRandomProjector(112),
         new ZScaleStandardizer(),
-    ], new SoftmaxClassifier(
+    ]),
+    persister: new Filesystem('transformer.rbx')
+);
+
+$estimator = new PersistentModel(
+    base: new SoftmaxClassifier(
         batchSize: 256,
         optimizer: new Momentum(new Constant(0.001))
-    )),
-    new Filesystem('har.rbx')
+    ),
+    persister: new Filesystem('model.rbx')
 );
 ```
 
-We'll wrap the entire pipeline in a [Persistent Model](https://rubixml.github.io/ML/3.0/persistent-model.html) meta-estimator that adds the `save()` and `load()` methods to the base estimator. Persistent Model requires a [Persister](https://rubixml.github.io/ML/3.0/persisters/api.html) object to tell it where to store the serialized model data. The [Filesystem](https://rubixml.github.io/ML/3.0/persisters/filesystem.html) persister saves and loads the model data to a file located at a user-specified path in storage.
+We'll wrap the transformer pipeline in a [Persistent Transformer](https://rubixml.github.io/ML/3.0/persistent-transformer.html) so it can be saved and loaded independently. The estimator is wrapped in a [Persistent Model](https://rubixml.github.io/ML/3.0/persistent-model.html) meta-estimator that adds the `save()` and `load()` methods to the base classifier. Both wrappers require a [Persister](https://rubixml.github.io/ML/3.0/persisters/api.html) object to tell them where to store the serialized data. The [Filesystem](https://rubixml.github.io/ML/3.0/persisters/filesystem.html) persister saves and loads the data to a file located at a user-specified path in storage.
 
 ### Setting a Logger
 
@@ -87,12 +93,28 @@ use Rubix\ML\Loggers\Screen;
 $estimator->setLogger(new Screen());
 ```
 
+### Applying the Transformer and Splitting the Data
+
+Before training, we apply the transformer pipeline to the dataset using the `apply()` method. This performs the Gaussian random projection and z-score standardization in-place on all samples.
+
+```php
+$dataset->apply($transformer);
+```
+
+Next, we hold out a 10% validation slice of the data for monitoring generalization during training. The `stratifiedSplit()` method ensures each class is proportionally represented in both subsets. We pass the validation slice to the estimator via `setValidationDataset()` so that a validation score is reported at each epoch alongside the training loss.
+
+```php
+[$training, $testing] = $dataset->randomize()->stratifiedSplit(0.9);
+
+$estimator->setValidationDataset($testing);
+```
+
 ### Training
 
 To start training the learner, call the `train()` method on the instance with the training dataset as an argument.
 
 ```php
-$estimator->train($dataset);
+$estimator->train($training);
 ```
 
 ### Training Loss
@@ -104,7 +126,7 @@ use Rubix\ML\Extractors\CSV;
 
 $extractor = new CSV('progress.csv', true);
 
-$extractor->export($estimator->progress());
+$extractor->export($estimator->progress(), overwrite: true);
 ```
 
 This is an example of a line plot of the Cross Entropy cost function from a training session. As you can see, the model learns quickly during the early epochs with slower training nearing the final stage as the learner fine-tunes the model parameters.
@@ -113,9 +135,11 @@ This is an example of a line plot of the Cross Entropy cost function from a trai
 
 ### Saving
 
-Since we wrapped the estimator in a Persistent Model wrapper, we can save the model by calling the `save()` method on the estimator instance.
+Since we wrapped the transformer and estimator in their respective Persistent wrappers, we can save each by calling the `save()` method on their instances.
 
 ```php
+$transformer->save();
+
 $estimator->save();
 ```
 
@@ -138,15 +162,18 @@ use Rubix\ML\Extractors\NDJSON;
 $dataset = Labeled::fromIterator(new NDJSON('test.ndjson'));
 ```
 
-### Load Model from Storage
+### Load Transformer and Model from Storage
 
-To load the estimator/transformer pipeline we instantiated earlier, call the static `load()` method on the [Persistent Model](https://rubixml.github.io/ML/3.0/persistent-model.html) class with a Persister instance pointing to the model in storage.
+To load the transformer and estimator we instantiated earlier, call the static `load()` method on the [Persistent Transformer](https://rubixml.github.io/ML/3.0/persistent-transformer.html) and [Persistent Model](https://rubixml.github.io/ML/3.0/persistent-model.html) classes with a Persister instance pointing to each artifact in storage.
 
 ```php
 use Rubix\ML\PersistentModel;
+use Rubix\ML\Transformers\PersistentTransformer;
 use Rubix\ML\Persisters\Filesystem;
 
-$estimator = PersistentModel::load(new Filesystem('har.rbx'));
+$transformer = PersistentTransformer::load(new Filesystem('transformer.rbx'));
+
+$estimator = PersistentModel::load(new Filesystem('model.rbx'));
 ```
 
 ### Freeing Residual State
@@ -159,9 +186,11 @@ $estimator->cleanup();
 
 ### Making Predictions
 
-To obtain the predictions from the model, pass the testing set to the `predict()` method on the estimator instance.
+Before making predictions, we apply the loaded transformer to the test dataset to project and standardize the features in the same way as training. Then we pass the transformed dataset to the `predict()` method on the estimator instance to obtain predictions.
 
 ```php
+$dataset->apply($transformer);
+
 $predictions = $estimator->predict($dataset);
 ```
 
