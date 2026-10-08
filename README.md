@@ -14,9 +14,9 @@ $ composer create-project rubix/har
 
 - [PHP](https://php.net) 8.3 or above
 
-#### Recommended
+### Recommended
 
-- [Tensor extension](https://github.com/RubixML/Tensor) for faster training and inference
+- [Tensor 4.1+ extension](https://github.com/RubixML/Tensor-Ext) for faster training and inference
 
 ## Tutorial
 
