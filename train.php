@@ -6,11 +6,13 @@ use Rubix\ML\Loggers\Screen;
 use Rubix\ML\Datasets\Labeled;
 use Rubix\ML\Extractors\NDJSON;
 use Rubix\ML\PersistentModel;
-use Rubix\ML\Pipeline;
+use Rubix\ML\Transformers\PersistentTransformer;
+use Rubix\ML\Transformers\Pipeline;
 use Rubix\ML\Transformers\GaussianRandomProjector;
 use Rubix\ML\Transformers\ZScaleStandardizer;
 use Rubix\ML\Classifiers\SoftmaxClassifier;
 use Rubix\ML\NeuralNet\Optimizers\Momentum;
+use Rubix\ML\NeuralNet\Optimizers\Schedulers\Constant;
 use Rubix\ML\Persisters\Filesystem;
 use Rubix\ML\Extractors\CSV;
 
@@ -20,26 +22,41 @@ $logger = new Screen();
 
 $logger->info('Loading data into memory');
 
-$dataset = Labeled::fromIterator(new NDJSON('train.ndjson'));
+$transformer = new PersistentTransformer(
+    base: new Pipeline([
+        new GaussianRandomProjector(112),
+        new ZScaleStandardizer(),
+    ]),
+    persister: new Filesystem('transformer.rbx')
+);
 
 $estimator = new PersistentModel(
-    new Pipeline([
-        new GaussianRandomProjector(110),
-        new ZScaleStandardizer(),
-    ], new SoftmaxClassifier(256, new Momentum(0.001))),
-    new Filesystem('har.rbx')
+    base: new SoftmaxClassifier(
+        batchSize: 256,
+        optimizer: new Momentum(new Constant(0.001))
+    ),
+    persister: new Filesystem('model.rbx')
 );
+
+$dataset = Labeled::fromIterator(new NDJSON('train.ndjson'));
+
+$dataset->apply($transformer);
+
+[$training, $testing] = $dataset->randomize()->stratifiedSplit(0.9);
 
 $estimator->setLogger($logger);
 
-$estimator->train($dataset);
+$estimator->setValidationDataset($testing);
+
+$estimator->train($training);
 
 $extractor = new CSV('progress.csv', true);
 
-$extractor->export($estimator->steps());
+$extractor->export($estimator->progress(), overwrite: true);
 
 $logger->info('Progress saved to progress.csv');
 
 if (strtolower(readline('Save this model? (y|[n]): ')) === 'y') {
+    $transformer->save();
     $estimator->save();
 }

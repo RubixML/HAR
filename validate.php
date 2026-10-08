@@ -6,6 +6,7 @@ use Rubix\ML\Loggers\Screen;
 use Rubix\ML\Datasets\Labeled;
 use Rubix\ML\Extractors\NDJSON;
 use Rubix\ML\PersistentModel;
+use Rubix\ML\Transformers\PersistentTransformer;
 use Rubix\ML\Persisters\Filesystem;
 use Rubix\ML\CrossValidation\Reports\AggregateReport;
 use Rubix\ML\CrossValidation\Reports\ConfusionMatrix;
@@ -19,9 +20,15 @@ $logger->info('Loading data into memory');
 
 $dataset = Labeled::fromIterator(new NDJSON('test.ndjson'));
 
-$estimator = PersistentModel::load(new Filesystem('har.rbx'));
+$transformer = PersistentTransformer::load(new Filesystem('transformer.rbx'));
+
+$estimator = PersistentModel::load(new Filesystem('model.rbx'));
+
+$estimator->cleanup();
 
 $logger->info('Making predictions');
+
+$dataset->apply($transformer);
 
 $predictions = $estimator->predict($dataset);
 
